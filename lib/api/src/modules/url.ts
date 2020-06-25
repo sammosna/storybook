@@ -28,10 +28,7 @@ export interface SubState {
 //     - nav: 0/1 -- show or hide the story list
 //
 //   We also support legacy URLs from storybook <5
-const initialUrlSupport = ({
-  navigate,
-  state: { location, path, viewMode, storyId },
-}: ModuleArgs) => {
+const initialUrlSupport = ({ state: { location, path, viewMode, storyId } }: ModuleArgs) => {
   const addition: Additions = {};
   const query = queryFromLocation(location);
   let selectedPanel;
@@ -77,20 +74,6 @@ const initialUrlSupport = ({
 
   if (addonPanel) {
     selectedPanel = addonPanel;
-  }
-
-  if (selectedKind && selectedStory) {
-    const id = toId(selectedKind, selectedStory);
-    setTimeout(() => navigate(`/${viewMode}/${id}`, { replace: true }), 1);
-  } else if (selectedKind) {
-    // Create a "storyId" of the form `kind-sanitized--*`
-    const standInId = toId(selectedKind, 'star').replace(/star$/, '*');
-    setTimeout(() => navigate(`/${viewMode}/${standInId}`, { replace: true }), 1);
-  } else if (!queryPath || queryPath === '/') {
-    setTimeout(() => navigate(`/${viewMode}/*`, { replace: true }), 1);
-  } else if (Object.keys(query).length > 1) {
-    // remove other queries
-    setTimeout(() => navigate(`${queryPath}`, { replace: true }), 1);
   }
 
   return { viewMode, layout: addition, selectedPanel, location, path, customQueryParams, storyId };
@@ -154,7 +137,27 @@ export const init: ModuleFn = ({ store, navigate, state, provider, fullAPI, ...r
     },
   };
 
-  const initModule = () => {
+  const initModule = async () => {
+    const { location, viewMode } = state;
+    const query = queryFromLocation(location);
+    const { selectedKind, selectedStory, path: queryPath } = query;
+
+    if (await fullAPI.showReleaseNotesOnLaunch()) {
+      setTimeout(() => navigate(`/settings/release-notes`, { replace: true }), 1);
+    } else if (selectedKind && selectedStory) {
+      const id = toId(selectedKind, selectedStory);
+      setTimeout(() => navigate(`/${viewMode}/${id}`, { replace: true }), 1);
+    } else if (selectedKind) {
+      // Create a "storyId" of the form `kind-sanitized--*`
+      const standInId = toId(selectedKind, 'star').replace(/star$/, '*');
+      setTimeout(() => navigate(`/${viewMode}/${standInId}`, { replace: true }), 1);
+    } else if (!queryPath || queryPath === '/') {
+      setTimeout(() => navigate(`/${viewMode}/*`, { replace: true }), 1);
+    } else if (Object.keys(query).length > 1) {
+      // remove other queries
+      setTimeout(() => navigate(`${queryPath}`, { replace: true }), 1);
+    }
+
     fullAPI.on(NAVIGATE_URL, (url: string, options: { [k: string]: any }) => {
       fullAPI.navigateUrl(url, options);
     });
@@ -162,7 +165,7 @@ export const init: ModuleFn = ({ store, navigate, state, provider, fullAPI, ...r
 
   return {
     api,
-    state: initialUrlSupport({ store, navigate, state, provider, fullAPI, ...rest }),
+    state: initialUrlSupport({ store, state, provider, fullAPI, ...rest }),
     init: initModule,
   };
 };

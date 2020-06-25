@@ -127,7 +127,7 @@ export const useMenu = (
     () => ({
       id: 'about',
       title: 'About your Storybook',
-      onClick: () => api.navigate('/settings/about'),
+      onClick: () => api.navigateToSettingsPage('/settings/about'),
       right: api.versionUpdateAvailable() && <Badge status="positive">Update</Badge>,
       left: <MenuItemIcon />,
     }),
@@ -138,7 +138,7 @@ export const useMenu = (
     () => ({
       id: 'shortcuts',
       title: 'Keyboard shortcuts',
-      onClick: () => api.navigate('/settings/shortcuts'),
+      onClick: () => api.navigateToSettingsPage('/settings/shortcuts'),
       right: shortcutToHumanStringIfEnabled(shortcutKeys.shortcutsPage, enableShortcuts),
       left: <MenuItemIcon />,
     }),
